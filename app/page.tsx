@@ -1,65 +1,159 @@
-import Image from "next/image";
+'use client'
+
+import { useState } from 'react'
+import CompanyForm from '@/components/CompanyForm'
+import ScenarioView from '@/components/ScenarioView'
+import ChatView from '@/components/ChatView'
+import ScoreView from '@/components/ScoreView'
+import { generateMockScenario, generateMockReply, generateMockScore } from '@/lib/mockData'
+import type { AppPhase, CompanyInfo, Scenario, ChatMessage, ScoreResult } from '@/types'
+
+const PHASE_STEPS: { phase: AppPhase; label: string }[] = [
+  { phase: 'input', label: '企業情報入力' },
+  { phase: 'scenario', label: 'シナリオ確認' },
+  { phase: 'chat', label: 'ロープレ' },
+  { phase: 'score', label: '採点結果' },
+]
+
+function StepIndicator({ currentPhase }: { currentPhase: AppPhase }) {
+  const currentIndex = PHASE_STEPS.findIndex((s) => s.phase === currentPhase)
+  return (
+    <div className="flex items-center gap-0">
+      {PHASE_STEPS.map((step, i) => {
+        const isDone = i < currentIndex
+        const isActive = i === currentIndex
+        return (
+          <div key={step.phase} className="flex items-center">
+            <div className="flex flex-col items-center">
+              <div
+                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                  isDone
+                    ? 'bg-blue-700 text-white'
+                    : isActive
+                    ? 'bg-white text-blue-700 border-2 border-blue-700'
+                    : 'bg-blue-800 text-blue-300'
+                }`}
+              >
+                {isDone ? '✓' : i + 1}
+              </div>
+              <span
+                className={`text-xs mt-1 hidden sm:block ${
+                  isActive ? 'text-white font-semibold' : 'text-blue-300'
+                }`}
+              >
+                {step.label}
+              </span>
+            </div>
+            {i < PHASE_STEPS.length - 1 && (
+              <div
+                className={`h-0.5 w-10 sm:w-16 mx-1 mb-4 transition-colors ${
+                  i < currentIndex ? 'bg-blue-400' : 'bg-blue-800'
+                }`}
+              />
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 export default function Home() {
+  const [phase, setPhase] = useState<AppPhase>('input')
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null)
+  const [scenario, setScenario] = useState<Scenario | null>(null)
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [scoreResult, setScoreResult] = useState<ScoreResult | null>(null)
+
+  const handleCreateScenario = (info: CompanyInfo) => {
+    setCompanyInfo(info)
+    setScenario(generateMockScenario(info))
+    setPhase('scenario')
+  }
+
+  const handleStartChat = () => {
+    if (!companyInfo) return
+    setMessages([
+      {
+        role: 'ai',
+        content: `はじめまして。${companyInfo.companyName}の${companyInfo.contactRole}の田中と申します。本日はどのようなご用件でしょうか？`,
+        timestamp: new Date(),
+      },
+    ])
+    setPhase('chat')
+  }
+
+  const handleSendMessage = (content: string) => {
+    if (!companyInfo) return
+    const userMsg: ChatMessage = { role: 'user', content, timestamp: new Date() }
+    setMessages((prev) => {
+      const updated = [...prev, userMsg]
+      setTimeout(() => {
+        const aiReply: ChatMessage = {
+          role: 'ai',
+          content: generateMockReply(updated, companyInfo),
+          timestamp: new Date(),
+        }
+        setMessages((latest) => [...latest, aiReply])
+      }, 800)
+      return updated
+    })
+  }
+
+  const handleScore = () => {
+    setScoreResult(generateMockScore(messages))
+    setPhase('score')
+  }
+
+  const handleReset = () => {
+    setPhase('input')
+    setCompanyInfo(null)
+    setScenario(null)
+    setMessages([])
+    setScoreResult(null)
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-blue-900 text-white py-5 px-6 shadow-md">
+        <div className="max-w-4xl mx-auto flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">AI営業道場</h1>
+            <p className="text-blue-300 text-sm mt-0.5">
+              企業情報からロールプレイシナリオを生成し、商談力を鍛えよう
+            </p>
+          </div>
+          <StepIndicator currentPhase={phase} />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto py-8 px-4">
+        {phase === 'input' && <CompanyForm onSubmit={handleCreateScenario} />}
+
+        {phase === 'scenario' && scenario && companyInfo && (
+          <ScenarioView
+            scenario={scenario}
+            companyInfo={companyInfo}
+            onStart={handleStartChat}
+            onBack={() => setPhase('input')}
+          />
+        )}
+
+        {phase === 'chat' && scenario && companyInfo && (
+          <ChatView
+            messages={messages}
+            scenario={scenario}
+            companyInfo={companyInfo}
+            onSendMessage={handleSendMessage}
+            onScore={handleScore}
+            onBack={() => setPhase('scenario')}
+          />
+        )}
+
+        {phase === 'score' && scoreResult && (
+          <ScoreView scoreResult={scoreResult} onReset={handleReset} />
+        )}
       </main>
     </div>
-  );
+  )
 }
