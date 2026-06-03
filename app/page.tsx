@@ -101,7 +101,7 @@ export default function Home() {
   }
 
   const handleScore = () => {
-    setScoreResult(generateMockScore(messages))
+    setScoreResult(generateMockScore())
     setPhase('score')
   }
 

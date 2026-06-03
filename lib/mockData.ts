@@ -38,7 +38,7 @@ export function generateMockReply(messages: ChatMessage[], companyInfo: CompanyI
   return AI_REPLY_TEMPLATES[index](companyInfo);
 }
 
-export function generateMockScore(_messages: ChatMessage[]): ScoreResult {
+export function generateMockScore(): ScoreResult {
   return {
     totalScore: 72,
     hearingScore: 75,
