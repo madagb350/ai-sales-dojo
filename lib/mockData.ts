@@ -77,7 +77,9 @@ export function generateMockReply(
         ? ADVANCED_TEMPLATES
         : STANDARD_TEMPLATES;
   const aiCount = messages.filter((m) => m.role === 'ai').length;
-  const index = Math.min(aiCount, templates.length - 1);
+  const seededGreetingOffset = messages[0]?.role === 'ai' ? 1 : 0;
+  const turn = Math.max(aiCount - seededGreetingOffset, 0);
+  const index = Math.min(turn, templates.length - 1);
   return templates[index](companyInfo);
 }
 
