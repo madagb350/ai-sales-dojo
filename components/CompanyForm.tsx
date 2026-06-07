@@ -5,6 +5,8 @@ import type { CompanyInfo } from '@/types'
 
 interface Props {
   onSubmit: (info: CompanyInfo) => void
+  isGenerating?: boolean
+  error?: string | null
 }
 
 const INDUSTRY_OPTIONS = [
@@ -47,7 +49,7 @@ const INITIAL_FORM: CompanyInfo = {
   contactRole: '',
 }
 
-export default function CompanyForm({ onSubmit }: Props) {
+export default function CompanyForm({ onSubmit, isGenerating = false, error = null }: Props) {
   const [form, setForm] = useState<CompanyInfo>(INITIAL_FORM)
 
   const handleChange = (field: keyof CompanyInfo, value: string) => {
@@ -192,14 +194,21 @@ export default function CompanyForm({ onSubmit }: Props) {
           </div>
         </div>
 
-        <div className="flex justify-end pt-4 border-t border-slate-100">
-          <button
-            type="submit"
-            disabled={!isValid}
-            className="bg-blue-700 hover:bg-blue-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-xl transition-colors shadow-sm"
-          >
-            ロープレを作成する →
-          </button>
+        <div className="flex flex-col gap-3 pt-4 border-t border-slate-100">
+          {error && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2">
+              {error}
+            </p>
+          )}
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={!isValid || isGenerating}
+              className="bg-blue-700 hover:bg-blue-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-xl transition-colors shadow-sm"
+            >
+              {isGenerating ? 'AIがシナリオを作成中...' : 'ロープレを作成する →'}
+            </button>
+          </div>
         </div>
       </form>
     </div>
