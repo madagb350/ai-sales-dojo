@@ -1,0 +1,13 @@
+language: "ja-JP"
+
+reviews:
+  profile: "chill"
+  high_level_summary: true
+  review_status: true
+  request_changes_workflow: false
+  auto_review:
+    enabled: true
+    drafts: false
+
+chat:
+  auto_reply: true
