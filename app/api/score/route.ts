@@ -71,6 +71,9 @@ const scoreEvalSchema = z.object({
 
 type ScoreEval = z.infer<typeof scoreEvalSchema>;
 
+/**
+ * 5項目スコアの平均を四捨五入して totalScore を返す。
+ */
 function calcTotalScore(ev: ScoreEval): number {
   const sum =
     ev.hearingScore +
@@ -81,6 +84,11 @@ function calcTotalScore(ev: ScoreEval): number {
   return Math.round(sum / 5);
 }
 
+/**
+ * 採点 API エンドポイント。
+ * Gemini API が利用可能な場合は Structured Output で採点結果を生成し、
+ * 利用不可またはエラー時はモックデータにフォールバックする。
+ */
 export async function POST(request: Request) {
   // JSON 解析エラー → 400
   let body: unknown;
