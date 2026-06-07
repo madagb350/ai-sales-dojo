@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { GoogleGenAI } from '@google/genai';
 import type { ScoreResult } from '@/types';
 import { generateMockScore } from '@/lib/mockData';
@@ -134,15 +133,8 @@ ${conversationHistory}
 goodPoints と improvements はそれぞれ2〜3件、会話内容に基づいた具体的なフィードバックを日本語で生成してください。
 nextPhraseTip は次回の商談でそのまま使える具体的な日本語の営業トークフレーズにしてください。`;
 
-      // Zod スキーマを JSON Schema に変換（$schema は Gemini 不要のため除去）
-      // zod-to-json-schema v3 の型定義は Zod v3 を前提とするため unknown 経由でキャスト
-      type ZodInput = Parameters<typeof zodToJsonSchema>[0];
-      const rawSchema = zodToJsonSchema(scoreEvalSchema as unknown as ZodInput, {
-        $refStrategy: 'none',
-      }) as Record<string, unknown>;
-      const jsonSchema = Object.fromEntries(
-        Object.entries(rawSchema).filter(([k]) => k !== '$schema'),
-      );
+      // Zod v4 ネイティブの toJSONSchema で変換（$schema は Gemini 不要のため除去）
+      const { $schema: _$schema, ...jsonSchema } = z.toJSONSchema(scoreEvalSchema) as Record<string, unknown>;
 
       const response = await ai.models.generateContent({
         model,
