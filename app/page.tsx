@@ -5,7 +5,7 @@ import CompanyForm from '@/components/CompanyForm'
 import ScenarioView from '@/components/ScenarioView'
 import ChatView from '@/components/ChatView'
 import ScoreView from '@/components/ScoreView'
-import { generateMockScenario, generateMockReply, generateMockScore } from '@/lib/mockData'
+import { generateMockScenario, generateMockScore } from '@/lib/mockData'
 import type { AppPhase, CompanyInfo, Scenario, ChatMessage, ScoreResult } from '@/types'
 
 const PHASE_STEPS: { phase: AppPhase; label: string }[] = [
@@ -64,6 +64,7 @@ export default function Home() {
   const [scenario, setScenario] = useState<Scenario | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [scoreResult, setScoreResult] = useState<ScoreResult | null>(null)
+  const [isAiTyping, setIsAiTyping] = useState(false)
 
   const handleCreateScenario = (info: CompanyInfo) => {
     setCompanyInfo(info)
@@ -83,21 +84,26 @@ export default function Home() {
     setPhase('chat')
   }
 
-  const handleSendMessage = (content: string) => {
+  const handleSendMessage = async (content: string) => {
     if (!companyInfo) return
     const userMsg: ChatMessage = { role: 'user', content, timestamp: new Date() }
-    setMessages((prev) => {
-      const updated = [...prev, userMsg]
-      setTimeout(() => {
-        const aiReply: ChatMessage = {
-          role: 'ai',
-          content: generateMockReply(updated, companyInfo),
-          timestamp: new Date(),
-        }
-        setMessages((latest) => [...latest, aiReply])
-      }, 800)
-      return updated
-    })
+    const updatedMessages = [...messages, userMsg]
+    setMessages(updatedMessages)
+    setIsAiTyping(true)
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: updatedMessages, companyInfo }),
+      })
+      const data: { content: string } = await res.json()
+      setMessages((prev) => [
+        ...prev,
+        { role: 'ai', content: data.content, timestamp: new Date() },
+      ])
+    } finally {
+      setIsAiTyping(false)
+    }
   }
 
   const handleScore = () => {
@@ -147,6 +153,7 @@ export default function Home() {
             onSendMessage={handleSendMessage}
             onScore={handleScore}
             onBack={() => setPhase('scenario')}
+            isAiTyping={isAiTyping}
           />
         )}
 
