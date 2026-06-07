@@ -19,3 +19,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - 1 つのコンポーネントが大きくなりすぎる場合は `components/` 配下に分割すること
 - 型定義が必要な場合は `types/` 配下に定義すること
 - 実装後に変更内容の要約と確認手順を日本語で説明すること
+- ユーザーから明示的に依頼された場合は、実装後にlintとbuildを実行し、成功時のみコミット・push・PR作成まで行うこと
+- PRのbaseブランチは、特別な指定がなければdevelopとすること
+- `.env.local`、APIキー、認証情報はコミットしないこと
+- pushおよびPR作成前にgit statusとgit diffを確認すること
+- 想定外の変更ファイルがある場合は処理を停止して確認すること

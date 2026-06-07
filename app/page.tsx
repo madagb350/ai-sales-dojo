@@ -5,7 +5,7 @@ import CompanyForm from '@/components/CompanyForm'
 import ScenarioView from '@/components/ScenarioView'
 import ChatView from '@/components/ChatView'
 import ScoreView from '@/components/ScoreView'
-import { generateMockScenario, generateMockScore } from '@/lib/mockData'
+import { generateMockScenario } from '@/lib/mockData'
 import type { AppPhase, CompanyInfo, Scenario, ChatMessage, ScoreResult } from '@/types'
 
 const PHASE_STEPS: { phase: AppPhase; label: string }[] = [
@@ -65,6 +65,8 @@ export default function Home() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [scoreResult, setScoreResult] = useState<ScoreResult | null>(null)
   const [isAiTyping, setIsAiTyping] = useState(false)
+  const [isScoring, setIsScoring] = useState(false)
+  const [scoreError, setScoreError] = useState<string | null>(null)
 
   const handleCreateScenario = (info: CompanyInfo) => {
     setCompanyInfo(info)
@@ -115,9 +117,26 @@ export default function Home() {
     }
   }
 
-  const handleScore = () => {
-    setScoreResult(generateMockScore())
-    setPhase('score')
+  const handleScore = async () => {
+    if (!companyInfo || !scenario) return
+    setIsScoring(true)
+    setScoreError(null)
+    try {
+      const res = await fetch('/api/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, companyInfo, scenario }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = (await res.json()) as import('@/types').ScoreResult
+      setScoreResult(data)
+      setPhase('score')
+    } catch (error) {
+      console.error('Score error:', error)
+      setScoreError('採点中にエラーが発生しました。もう一度お試しください。')
+    } finally {
+      setIsScoring(false)
+    }
   }
 
   const handleReset = () => {
@@ -126,6 +145,7 @@ export default function Home() {
     setScenario(null)
     setMessages([])
     setScoreResult(null)
+    setScoreError(null)
   }
 
   return (
@@ -163,6 +183,8 @@ export default function Home() {
             onScore={handleScore}
             onBack={() => setPhase('scenario')}
             isAiTyping={isAiTyping}
+            isScoring={isScoring}
+            scoreError={scoreError}
           />
         )}
 

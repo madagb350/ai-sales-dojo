@@ -11,6 +11,8 @@ interface Props {
   onScore: () => void
   onBack: () => void
   isAiTyping?: boolean
+  isScoring?: boolean
+  scoreError?: string | null
 }
 
 export default function ChatView({
@@ -21,6 +23,8 @@ export default function ChatView({
   onScore,
   onBack,
   isAiTyping = false,
+  isScoring = false,
+  scoreError = null,
 }: Props) {
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -134,20 +138,28 @@ export default function ChatView({
       </div>
 
       {/* アクションボタン */}
-      <div className="flex gap-4">
-        <button
-          onClick={onBack}
-          className="px-6 py-3 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors font-medium"
-        >
-          ← シナリオに戻る
-        </button>
-        <button
-          onClick={onScore}
-          disabled={userMessageCount < 1}
-          className="flex-1 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-xl transition-colors shadow-sm"
-        >
-          採点する（{userMessageCount}回発言済み）
-        </button>
+      <div className="flex flex-col gap-2">
+        {scoreError && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2">
+            {scoreError}
+          </p>
+        )}
+        <div className="flex gap-4">
+          <button
+            onClick={onBack}
+            disabled={isScoring}
+            className="px-6 py-3 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+          >
+            ← シナリオに戻る
+          </button>
+          <button
+            onClick={onScore}
+            disabled={userMessageCount < 1 || isScoring || isAiTyping}
+            className="flex-1 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-xl transition-colors shadow-sm"
+          >
+            {isScoring ? 'AIが採点中...' : `採点する（${userMessageCount}回発言済み）`}
+          </button>
+        </div>
       </div>
     </div>
   )
