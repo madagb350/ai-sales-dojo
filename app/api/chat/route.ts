@@ -8,6 +8,11 @@ interface RequestBody {
   companyInfo: CompanyInfo;
 }
 
+/**
+ * チャット API エンドポイント。
+ * Gemini API が利用可能な場合はそちらでレスポンスを生成し、
+ * 利用不可またはエラー時はモックデータにフォールバックする。
+ */
 export async function POST(request: Request) {
   try {
     const { messages, companyInfo }: RequestBody = await request.json();
