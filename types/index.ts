@@ -36,4 +36,5 @@ export interface ScoreResult {
   goodPoints: string[];
   improvements: string[];
   nextPhraseTip: string;
+  source?: 'gemini' | 'mock';
 }
