@@ -4,15 +4,17 @@ import { GoogleGenAI } from '@google/genai';
 import type { CompanyInfo, Scenario } from '@/types';
 import { generateMockScenario } from '@/lib/mockData';
 
+const boundedText = (max: number) => z.string().trim().min(1).max(max)
+
 const requestSchema = z.object({
-  companyName: z.string().min(1),
-  industry: z.string().min(1),
-  businessDescription: z.string().min(1),
-  employeeSize: z.string().min(1),
-  challenges: z.string().min(1),
-  proposedService: z.string().min(1),
-  salesPhase: z.string().min(1),
-  contactRole: z.string().min(1),
+  companyName: boundedText(120),
+  industry: boundedText(80),
+  businessDescription: boundedText(1000),
+  employeeSize: boundedText(40),
+  challenges: boundedText(1000),
+  proposedService: boundedText(200),
+  salesPhase: boundedText(80),
+  contactRole: boundedText(120),
 });
 
 const scenarioSchema = z.object({
@@ -36,6 +38,18 @@ const scenarioSchema = z.object({
     .describe('営業担当がそのまま使えるオープニングトーク（自然な日本語、1〜2文）'),
 });
 
+const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
+  let timer: ReturnType<typeof setTimeout>
+  const timeout = new Promise<T>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Gemini timeout (${ms}ms)`)), ms)
+  })
+  return Promise.race([promise.finally(() => clearTimeout(timer)), timeout])
+}
+
+/**
+ * POST /api/scenario
+ * CompanyInfo を受け取り Gemini でシナリオを生成する。失敗時はモックにフォールバック。
+ */
 export async function POST(request: Request) {
   // JSON 解析エラー → 400
   let body: unknown;
@@ -92,14 +106,17 @@ export async function POST(request: Request) {
         Object.entries(rawSchema).filter(([k]) => k !== '$schema'),
       );
 
-      const response = await ai.models.generateContent({
-        model,
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        config: {
-          responseMimeType: 'application/json',
-          responseJsonSchema: jsonSchema,
-        },
-      });
+      const response = await withTimeout(
+        ai.models.generateContent({
+          model,
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          config: {
+            responseMimeType: 'application/json',
+            responseJsonSchema: jsonSchema,
+          },
+        }),
+        15000,
+      );
 
       const text = response.text;
       if (!text) throw new Error('Empty response');

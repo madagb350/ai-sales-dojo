@@ -60,7 +60,8 @@ export default function CompanyForm({ onSubmit, isGenerating = false, error = nu
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (isValid) onSubmit(form)
+    if (!isValid || isGenerating) return
+    onSubmit(form)
   }
 
   return (
