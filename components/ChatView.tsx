@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import type { CompanyInfo, ChatMessage, Scenario } from '@/types'
+import AutoResizeTextarea from '@/components/AutoResizeTextarea'
 
 interface Props {
   messages: ChatMessage[]
@@ -39,13 +40,6 @@ export default function ChatView({
     if (!trimmed) return
     onSendMessage(trimmed)
     setInput('')
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
   }
 
   return (
@@ -117,13 +111,15 @@ export default function ChatView({
         {/* 入力エリア */}
         <div className="border-t border-slate-200 p-4 bg-slate-50">
           <div className="flex gap-3 items-end">
-            <textarea
+            <AutoResizeTextarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
+              onEnterSend={handleSend}
               placeholder="営業担当として返答を入力してください..."
-              rows={2}
-              className="flex-1 rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 resize-none focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 bg-white"
+              rows={1}
+              maxHeight={192}
+              disabled={isAiTyping}
+              className="flex-1 rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
             />
             <button
               onClick={handleSend}

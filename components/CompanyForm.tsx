@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { CompanyInfo, RoleplayDifficulty, RoleplaySettings } from '@/types'
+import AutoResizeTextarea from '@/components/AutoResizeTextarea'
 
 interface Props {
   onSubmit: (info: CompanyInfo, settings: RoleplaySettings) => void
@@ -133,12 +134,12 @@ export default function CompanyForm({ onSubmit, isGenerating = false, error = nu
             <label className="block text-sm font-medium text-slate-700 mb-2">
               事業内容 <span className="text-red-500">*</span>
             </label>
-            <textarea
+            <AutoResizeTextarea
               value={form.businessDescription}
               onChange={(e) => handleChange('businessDescription', e.target.value)}
               placeholder="例：中小企業向けのクラウド型会計ソフトの開発・販売"
-              rows={2}
-              className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none"
+              rows={3}
+              className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
             />
           </div>
 
@@ -182,12 +183,12 @@ export default function CompanyForm({ onSubmit, isGenerating = false, error = nu
             <label className="block text-sm font-medium text-slate-700 mb-2">
               想定課題 <span className="text-red-500">*</span>
             </label>
-            <textarea
+            <AutoResizeTextarea
               value={form.challenges}
               onChange={(e) => handleChange('challenges', e.target.value)}
               placeholder="例：既存の経理業務が手作業で非効率で、月次決算に時間がかかっている"
-              rows={2}
-              className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none"
+              rows={3}
+              className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
             />
           </div>
 
@@ -195,11 +196,11 @@ export default function CompanyForm({ onSubmit, isGenerating = false, error = nu
             <label className="block text-sm font-medium text-slate-700 mb-2">
               提案したいサービス <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
+            <AutoResizeTextarea
               value={form.proposedService}
               onChange={(e) => handleChange('proposedService', e.target.value)}
               placeholder="例：クラウド型SFA（営業支援システム）"
+              rows={3}
               className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
             />
           </div>
