@@ -6,7 +6,7 @@ import ScenarioView from '@/components/ScenarioView'
 import ChatView from '@/components/ChatView'
 import ScoreView from '@/components/ScoreView'
 // generateMockScenario は /api/scenario のフォールバックとして lib/mockData.ts に保持
-import type { AppPhase, CompanyInfo, Scenario, ChatMessage, ScoreResult } from '@/types'
+import type { AppPhase, CompanyInfo, Scenario, ChatMessage, ScoreResult, RoleplaySettings } from '@/types'
 
 const PHASE_STEPS: { phase: AppPhase; label: string }[] = [
   { phase: 'input', label: '企業情報入力' },
@@ -64,20 +64,22 @@ export default function Home() {
   const [scenario, setScenario] = useState<Scenario | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [scoreResult, setScoreResult] = useState<ScoreResult | null>(null)
+  const [settings, setSettings] = useState<RoleplaySettings>({ difficulty: 'standard' })
   const [isGeneratingScenario, setIsGeneratingScenario] = useState(false)
   const [scenarioError, setScenarioError] = useState<string | null>(null)
   const [isAiTyping, setIsAiTyping] = useState(false)
   const [isScoring, setIsScoring] = useState(false)
   const [scoreError, setScoreError] = useState<string | null>(null)
 
-  const handleCreateScenario = async (info: CompanyInfo) => {
+  const handleCreateScenario = async (info: CompanyInfo, newSettings: RoleplaySettings) => {
+    setSettings(newSettings)
     setIsGeneratingScenario(true)
     setScenarioError(null)
     try {
       const res = await fetch('/api/scenario', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(info),
+        body: JSON.stringify({ ...info, difficulty: newSettings.difficulty }),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = (await res.json()) as import('@/types').Scenario
@@ -114,7 +116,7 @@ export default function Home() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: updatedMessages, companyInfo }),
+        body: JSON.stringify({ messages: updatedMessages, companyInfo, difficulty: settings.difficulty }),
       })
       if (!res.ok) {
         throw new Error(`API error: ${res.status}`)
@@ -143,7 +145,7 @@ export default function Home() {
       const res = await fetch('/api/score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, companyInfo, scenario }),
+        body: JSON.stringify({ messages, companyInfo, scenario, difficulty: settings.difficulty }),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = (await res.json()) as import('@/types').ScoreResult
@@ -214,7 +216,7 @@ export default function Home() {
         )}
 
         {phase === 'score' && scoreResult && (
-          <ScoreView scoreResult={scoreResult} onReset={handleReset} />
+          <ScoreView scoreResult={scoreResult} difficulty={settings.difficulty} onReset={handleReset} />
         )}
       </main>
     </div>

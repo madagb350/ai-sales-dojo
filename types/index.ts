@@ -1,5 +1,11 @@
 export type AppPhase = 'input' | 'scenario' | 'chat' | 'score';
 
+export type RoleplayDifficulty = 'beginner' | 'standard' | 'advanced';
+
+export interface RoleplaySettings {
+  difficulty: RoleplayDifficulty;
+}
+
 export interface CompanyInfo {
   companyName: string;
   industry: string;

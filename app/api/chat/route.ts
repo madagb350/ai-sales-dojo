@@ -1,12 +1,22 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
-import type { ChatMessage, CompanyInfo } from '@/types';
+import type { ChatMessage, CompanyInfo, RoleplayDifficulty } from '@/types';
 import { generateMockReply } from '@/lib/mockData';
 
 interface RequestBody {
   messages: ChatMessage[];
   companyInfo: CompanyInfo;
+  difficulty?: RoleplayDifficulty;
 }
+
+const DIFFICULTY_INSTRUCTION: Record<RoleplayDifficulty, string> = {
+  beginner:
+    '難易度：初級。顧客は協力的で課題解決に前向きです。提案に対して建設的な質問をし、懸念は軽めです。',
+  standard:
+    '難易度：中級。顧客は現実的で、適度な懸念や質問を示しながら対話します。強い抵抗はないが簡単には決めません。',
+  advanced:
+    '難易度：上級。顧客は警戒心が強く、以下を厳しく確認してください：競合との差別化、ROIの数値根拠、セキュリティ・コンプライアンス対応、既存システムとの連携・移行リスク、社内稟議・決裁プロセス。会話履歴を踏まえ、同じ指摘を繰り返さず新たな視点から返答してください。',
+};
 
 /**
  * チャット API エンドポイント。
@@ -15,7 +25,7 @@ interface RequestBody {
  */
 export async function POST(request: Request) {
   try {
-    const { messages, companyInfo }: RequestBody = await request.json();
+    const { messages, companyInfo, difficulty = 'standard' }: RequestBody = await request.json();
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (apiKey) {
@@ -27,7 +37,7 @@ ${companyInfo.companyName}は${companyInfo.industry}業界の企業で、${compa
 従業員規模は${companyInfo.employeeSize}で、現在「${companyInfo.challenges}」という課題を抱えています。
 相手は「${companyInfo.proposedService}」を提案する営業担当者です。
 ビジネスの顧客として自然に振る舞い、日本語で1〜3文の簡潔な返答をしてください。
-簡単には購入を決めず、質問や懸念を適切に示してください。`;
+${DIFFICULTY_INSTRUCTION[difficulty]}`;
 
         // 最初のAIメッセージ（アプリが生成した挨拶）をスキップし、user→user、ai→model にマッピング
         const startIndex = messages[0]?.role === 'ai' ? 1 : 0;
@@ -53,7 +63,7 @@ ${companyInfo.companyName}は${companyInfo.industry}業界の企業で、${compa
     }
 
     // Gemini が使えない場合はモックにフォールバック
-    return NextResponse.json({ content: generateMockReply(messages, companyInfo) });
+    return NextResponse.json({ content: generateMockReply(messages, companyInfo, difficulty) });
   } catch (error) {
     console.error('Chat API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
