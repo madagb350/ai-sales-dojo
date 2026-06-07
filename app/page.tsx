@@ -96,10 +96,19 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: updatedMessages, companyInfo }),
       })
+      if (!res.ok) {
+        throw new Error(`API error: ${res.status}`)
+      }
       const data: { content: string } = await res.json()
       setMessages((prev) => [
         ...prev,
         { role: 'ai', content: data.content, timestamp: new Date() },
+      ])
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      setMessages((prev) => [
+        ...prev,
+        { role: 'ai', content: 'エラーが発生しました。もう一度お試しください。', timestamp: new Date() },
       ])
     } finally {
       setIsAiTyping(false)
