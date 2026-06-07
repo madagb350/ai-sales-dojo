@@ -16,13 +16,13 @@ export default function AutoResizeTextarea({
   ...props
 }: AutoResizeTextareaProps) {
   const ref = useRef<HTMLTextAreaElement>(null)
-  const minHeightRef = useRef(0)
+  const minHeightRef = useRef<number | null>(null)
 
   const resize = useCallback(() => {
     const el = ref.current
     if (!el) return
     el.style.height = 'auto'
-    const next = Math.max(el.scrollHeight, minHeightRef.current)
+    const next = Math.max(el.scrollHeight, minHeightRef.current ?? 0)
     if (maxHeight !== undefined && next > maxHeight) {
       el.style.height = `${maxHeight}px`
       el.style.overflowY = 'auto'
@@ -34,7 +34,7 @@ export default function AutoResizeTextarea({
 
   // mount: capture rows-based initial height as minimum, then resize
   useEffect(() => {
-    if (ref.current && minHeightRef.current === 0) {
+    if (ref.current && minHeightRef.current === null) {
       minHeightRef.current = ref.current.offsetHeight
     }
     resize()
