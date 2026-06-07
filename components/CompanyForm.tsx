@@ -1,13 +1,35 @@
 'use client'
 
 import { useState } from 'react'
-import type { CompanyInfo } from '@/types'
+import type { CompanyInfo, RoleplayDifficulty, RoleplaySettings } from '@/types'
 
 interface Props {
-  onSubmit: (info: CompanyInfo) => void
+  onSubmit: (info: CompanyInfo, settings: RoleplaySettings) => void
   isGenerating?: boolean
   error?: string | null
 }
+
+const DIFFICULTY_OPTIONS: {
+  value: RoleplayDifficulty
+  label: string
+  description: string
+}[] = [
+  {
+    value: 'beginner',
+    label: '初級',
+    description: '協力的な顧客。課題解決に前向きで、提案を歓迎してくれます。',
+  },
+  {
+    value: 'standard',
+    label: '中級',
+    description: '現実的な顧客。適度な懸念や質問を示しながら対話します。',
+  },
+  {
+    value: 'advanced',
+    label: '上級',
+    description: '警戒心の強い顧客。競合比較・ROI・リスクを厳しく確認します。',
+  },
+]
 
 const INDUSTRY_OPTIONS = [
   'IT・テクノロジー',
@@ -51,6 +73,7 @@ const INITIAL_FORM: CompanyInfo = {
 
 export default function CompanyForm({ onSubmit, isGenerating = false, error = null }: Props) {
   const [form, setForm] = useState<CompanyInfo>(INITIAL_FORM)
+  const [difficulty, setDifficulty] = useState<RoleplayDifficulty>('standard')
 
   const handleChange = (field: keyof CompanyInfo, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -61,7 +84,7 @@ export default function CompanyForm({ onSubmit, isGenerating = false, error = nu
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!isValid || isGenerating) return
-    onSubmit(form)
+    onSubmit(form, { difficulty })
   }
 
   return (
@@ -192,6 +215,38 @@ export default function CompanyForm({ onSubmit, isGenerating = false, error = nu
               placeholder="例：営業部長、IT部門マネージャー"
               className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
             />
+          </div>
+        </div>
+
+        {/* 難易度選択 */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-3">
+            難易度 <span className="text-red-500">*</span>
+          </label>
+          <div className="grid grid-cols-3 gap-3">
+            {DIFFICULTY_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setDifficulty(opt.value)}
+                className={`rounded-xl border-2 px-4 py-3 text-left transition-colors ${
+                  difficulty === opt.value
+                    ? 'border-blue-600 bg-blue-50'
+                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                }`}
+              >
+                <span
+                  className={`block text-sm font-semibold mb-1 ${
+                    difficulty === opt.value ? 'text-blue-700' : 'text-slate-800'
+                  }`}
+                >
+                  {opt.label}
+                </span>
+                <span className="block text-xs text-slate-500 leading-relaxed">
+                  {opt.description}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
 

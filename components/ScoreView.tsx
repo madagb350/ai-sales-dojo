@@ -1,8 +1,21 @@
-import type { ScoreResult } from '@/types'
+import type { ScoreResult, RoleplayDifficulty } from '@/types'
 
 interface Props {
   scoreResult: ScoreResult
+  difficulty: RoleplayDifficulty
   onReset: () => void
+}
+
+const DIFFICULTY_LABELS: Record<RoleplayDifficulty, string> = {
+  beginner: '初級',
+  standard: '中級',
+  advanced: '上級',
+}
+
+const DIFFICULTY_COLORS: Record<RoleplayDifficulty, string> = {
+  beginner: 'bg-green-100 text-green-700',
+  standard: 'bg-amber-100 text-amber-700',
+  advanced: 'bg-red-100 text-red-700',
 }
 
 interface ScoreBarProps {
@@ -38,14 +51,19 @@ function getTotalScoreLabel(score: number): { label: string; colorClass: string 
   return { label: '要改善', colorClass: 'text-red-600' }
 }
 
-export default function ScoreView({ scoreResult, onReset }: Props) {
+export default function ScoreView({ scoreResult, difficulty, onReset }: Props) {
   const { label, colorClass } = getTotalScoreLabel(scoreResult.totalScore)
 
   return (
     <div className="space-y-6">
       {/* 総合スコア */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
-        <h2 className="text-2xl font-bold text-slate-800 mb-6">採点結果</h2>
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <h2 className="text-2xl font-bold text-slate-800">採点結果</h2>
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${DIFFICULTY_COLORS[difficulty]}`}>
+            {DIFFICULTY_LABELS[difficulty]}
+          </span>
+        </div>
         <div className="inline-flex flex-col items-center">
           <div className="w-36 h-36 rounded-full border-8 border-blue-700 flex flex-col items-center justify-center mb-4">
             <span className="text-5xl font-bold text-blue-700">{scoreResult.totalScore}</span>
@@ -77,7 +95,7 @@ export default function ScoreView({ scoreResult, onReset }: Props) {
           <ul className="space-y-3">
             {scoreResult.goodPoints.map((point, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
-                <span className="text-green-500 mt-0.5 flex-shrink-0">●</span>
+                <span className="text-green-500 mt-0.5 shrink-0">●</span>
                 {point}
               </li>
             ))}
@@ -92,7 +110,7 @@ export default function ScoreView({ scoreResult, onReset }: Props) {
           <ul className="space-y-3">
             {scoreResult.improvements.map((point, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
-                <span className="text-amber-500 mt-0.5 flex-shrink-0">●</span>
+                <span className="text-amber-500 mt-0.5 shrink-0">●</span>
                 {point}
               </li>
             ))}

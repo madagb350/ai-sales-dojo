@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { GoogleGenAI } from '@google/genai';
-import type { CompanyInfo, Scenario } from '@/types';
+import type { CompanyInfo, Scenario, RoleplayDifficulty } from '@/types';
 import { generateMockScenario } from '@/lib/mockData';
 
 const boundedText = (max: number) => z.string().trim().min(1).max(max)
@@ -15,7 +15,17 @@ const requestSchema = z.object({
   proposedService: boundedText(200),
   salesPhase: boundedText(80),
   contactRole: boundedText(120),
+  difficulty: z.enum(['beginner', 'standard', 'advanced']).default('standard'),
 });
+
+const DIFFICULTY_INSTRUCTION: Record<RoleplayDifficulty, string> = {
+  beginner:
+    '顧客の警戒度：低。課題解決に積極的で提案を歓迎している。懸念は軽く、コミュニケーションしやすい相手として設定する。',
+  standard:
+    '顧客の警戒度：中。現実的な判断力を持ち、いくつかの懸念を示しながらも建設的に対話できる相手として設定する。',
+  advanced:
+    '顧客の警戒度：高。複数の競合と比較検討中で、ROI・セキュリティ・既存システム連携・稟議プロセスを厳しく確認してくる相手として設定する。難易度を高く設定すること。',
+};
 
 const scenarioSchema = z.object({
   customerName: z.string().describe('顧客企業名'),
@@ -68,7 +78,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const info = parsed.data as CompanyInfo;
+  const { difficulty, ...infoFields } = parsed.data;
+  const info = infoFields as CompanyInfo;
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (apiKey) {
@@ -98,7 +109,10 @@ export async function POST(request: Request) {
 - situation は顧客の事業背景・課題・状況を2〜4文で説明する
 - objectives は${info.salesPhase}フェーズで達成すべき具体的な目標を3件程度
 - keyPoints は${info.contactRole}の観点や課題に応じた攻略ポイントを3件程度
-- openingLine は${info.salesPhase}フェーズにふさわしい、営業担当がそのまま使える自然な日本語のオープニングトーク`;
+- openingLine は${info.salesPhase}フェーズにふさわしい、営業担当がそのまま使える自然な日本語のオープニングトーク
+
+## 難易度設定
+${DIFFICULTY_INSTRUCTION[difficulty]}`;
 
       // $schema は Gemini 不要のため除去
       const rawSchema = z.toJSONSchema(scenarioSchema) as Record<string, unknown>;
@@ -140,5 +154,5 @@ export async function POST(request: Request) {
   }
 
   // フォールバック（GEMINI_API_KEY 未設定・429・通信エラー・JSON解析エラー・スキーマ検証失敗）
-  return NextResponse.json({ ...generateMockScenario(info), source: 'mock' });
+  return NextResponse.json({ ...generateMockScenario(info, difficulty), source: 'mock' });
 }

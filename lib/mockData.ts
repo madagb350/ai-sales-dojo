@@ -1,10 +1,20 @@
-import type { CompanyInfo, Scenario, ChatMessage, ScoreResult } from '@/types';
+import type { CompanyInfo, Scenario, ChatMessage, ScoreResult, RoleplayDifficulty } from '@/types';
 
-export function generateMockScenario(info: CompanyInfo): Scenario {
+export function generateMockScenario(
+  info: CompanyInfo,
+  difficulty: RoleplayDifficulty = 'standard',
+): Scenario {
+  const difficultyNote =
+    difficulty === 'beginner'
+      ? `担当者は課題解決に積極的で、新しいソリューションの導入に前向きです。`
+      : difficulty === 'advanced'
+        ? `担当者は複数の競合サービスを比較検討中で、ROIや既存システムとの連携について厳しい確認が予想されます。`
+        : `担当者はいくつかの懸念を持ちながらも、課題解決に関心を示しています。`;
+
   return {
     customerName: info.companyName,
     customerRole: info.contactRole,
-    situation: `${info.companyName}は${info.industry}業界で活躍する企業です。${info.businessDescription}を主な事業として展開しており、従業員規模は${info.employeeSize}です。現在「${info.challenges}」という課題を抱えており、解決策を模索している状況です。`,
+    situation: `${info.companyName}は${info.industry}業界で活躍する企業です。${info.businessDescription}を主な事業として展開しており、従業員規模は${info.employeeSize}です。現在「${info.challenges}」という課題を抱えており、解決策を模索している状況です。${difficultyNote}`,
     objectives: [
       `「${info.challenges}」の詳細と現状の深刻度をヒアリングする`,
       `${info.proposedService}の導入によって解決できる価値を具体的に訴求する`,
@@ -19,7 +29,17 @@ export function generateMockScenario(info: CompanyInfo): Scenario {
   };
 }
 
-const AI_REPLY_TEMPLATES = [
+const BEGINNER_TEMPLATES = [
+  (info: CompanyInfo) =>
+    `ありがとうございます。「${info.challenges}」については改善したいと思っています。${info.proposedService}で具体的にどのように解決できますか？`,
+  () => `なるほど、それは良さそうですね。導入にあたって何か準備が必要なことはありますか？`,
+  (info: CompanyInfo) =>
+    `${info.proposedService}の導入事例を少し教えていただけますか？参考にしたいです。`,
+  () => `ご提案の内容はよく理解できました。社内での手続きを確認してみます。`,
+  () => `前向きに検討したいと思います。次のステップはどうすればよいですか？`,
+];
+
+const STANDARD_TEMPLATES = [
   (info: CompanyInfo) =>
     `ご連絡いただきありがとうございます。「${info.challenges}」については確かに頭を悩ませているところです。具体的にどのような解決策をお持ちでしょうか？`,
   () =>
@@ -32,20 +52,44 @@ const AI_REPLY_TEMPLATES = [
     `ご提案の内容は理解しました。社内で一度検討してみます。次回はいつ頃お時間をいただけますか？`,
 ];
 
-export function generateMockReply(messages: ChatMessage[], companyInfo: CompanyInfo): string {
+const ADVANCED_TEMPLATES = [
+  (info: CompanyInfo) =>
+    `「${info.challenges}」は認識していますが、既に他社のソリューションと並行して検討しています。${info.proposedService}が他社と何が違うのか、具体的に教えていただけますか？`,
+  () =>
+    `ROIの根拠を数字で示してください。定性的な説明だけでは社内の承認を得られません。`,
+  () =>
+    `セキュリティ基準とコンプライアンス対応はどうなっていますか？当社は業界規制への準拠が必須です。`,
+  () =>
+    `既存の基幹システムとの連携はどのように実現しますか？移行リスクと期間の見積もりも必要です。`,
+  () =>
+    `社内稟議には複数の決裁者が関わります。費用対効果の試算と導入ロードマップを文書で提出していただけますか？`,
+];
+
+export function generateMockReply(
+  messages: ChatMessage[],
+  companyInfo: CompanyInfo,
+  difficulty: RoleplayDifficulty = 'standard',
+): string {
+  const templates =
+    difficulty === 'beginner'
+      ? BEGINNER_TEMPLATES
+      : difficulty === 'advanced'
+        ? ADVANCED_TEMPLATES
+        : STANDARD_TEMPLATES;
   const aiCount = messages.filter((m) => m.role === 'ai').length;
-  const index = Math.min(aiCount, AI_REPLY_TEMPLATES.length - 1);
-  return AI_REPLY_TEMPLATES[index](companyInfo);
+  const index = Math.min(aiCount, templates.length - 1);
+  return templates[index](companyInfo);
 }
 
-export function generateMockScore(): ScoreResult {
+export function generateMockScore(difficulty: RoleplayDifficulty = 'standard'): ScoreResult {
+  const offset = difficulty === 'beginner' ? 8 : difficulty === 'advanced' ? -8 : 0;
   return {
-    totalScore: 72,
-    hearingScore: 75,
-    problemClarificationScore: 68,
-    proposalScore: 80,
-    objectionHandlingScore: 65,
-    nextActionScore: 70,
+    totalScore: 72 + offset,
+    hearingScore: 75 + offset,
+    problemClarificationScore: 68 + offset,
+    proposalScore: 80 + offset,
+    objectionHandlingScore: 65 + offset,
+    nextActionScore: 70 + offset,
     goodPoints: [
       '顧客の課題に対して共感を示す姿勢が随所に見られました',
       'サービスの具体的なメリットをわかりやすく伝えられていました',

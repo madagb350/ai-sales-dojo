@@ -1,12 +1,22 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { GoogleGenAI } from '@google/genai';
-import type { ScoreResult } from '@/types';
+import type { ScoreResult, RoleplayDifficulty } from '@/types';
 import { generateMockScore } from '@/lib/mockData';
+
+const DIFFICULTY_SCORING: Record<RoleplayDifficulty, string> = {
+  beginner:
+    '難易度：初級（協力的な顧客相手）。基本的なコミュニケーション力・傾聴力・共感を重視した採点基準を適用してください。',
+  standard:
+    '難易度：中級（現実的な顧客相手）。標準的なB2B営業スキルで採点してください。',
+  advanced:
+    '難易度：上級（警戒心の強い顧客相手）。高度なスキルを期待して厳格に採点してください。競合への対応、ROI論拠の具体性、懸念の払拭、次回アクションの合意形成を特に重視してください。',
+};
 
 // リクエストスキーマ
 const requestSchema = z.object({
   messages: z.array(z.object({ role: z.string(), content: z.string() })).min(1),
+  difficulty: z.enum(['beginner', 'standard', 'advanced']).default('standard'),
   companyInfo: z.object({
     companyName: z.string(),
     industry: z.string(),
@@ -107,7 +117,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { messages, companyInfo, scenario } = parsed.data;
+  const { messages, companyInfo, scenario, difficulty } = parsed.data;
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (apiKey) {
@@ -120,6 +130,9 @@ export async function POST(request: Request) {
         .join('\n');
 
       const prompt = `あなたは営業コーチです。以下の商談ロールプレイを採点してください。
+
+## 採点難易度
+${DIFFICULTY_SCORING[difficulty as RoleplayDifficulty]}
 
 ## 営業対象企業情報
 - 企業名: ${companyInfo.companyName}
@@ -178,5 +191,5 @@ nextPhraseTip は次回の商談でそのまま使える具体的な日本語の
   }
 
   // フォールバック（GEMINI_API_KEY 未設定・APIエラー・429・JSON解析失敗）
-  return NextResponse.json({ ...generateMockScore(), source: 'mock' });
+  return NextResponse.json({ ...generateMockScore(difficulty as RoleplayDifficulty), source: 'mock' });
 }
