@@ -8,6 +8,11 @@ interface RequestBody {
   companyInfo: CompanyInfo;
 }
 
+/**
+ * チャット API エンドポイント。
+ * Gemini API が利用可能な場合はそちらでレスポンスを生成し、
+ * 利用不可またはエラー時はモックデータにフォールバックする。
+ */
 export async function POST(request: Request) {
   try {
     const { messages, companyInfo }: RequestBody = await request.json();
@@ -31,8 +36,9 @@ ${companyInfo.companyName}は${companyInfo.industry}業界の企業で、${compa
           parts: [{ text: msg.content }],
         }));
 
+        const model = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash-lite';
         const response = await ai.models.generateContent({
-          model: 'gemini-2.0-flash',
+          model,
           contents,
           config: { systemInstruction },
         });
