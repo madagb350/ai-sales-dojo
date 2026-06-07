@@ -5,7 +5,7 @@ import CompanyForm from '@/components/CompanyForm'
 import ScenarioView from '@/components/ScenarioView'
 import ChatView from '@/components/ChatView'
 import ScoreView from '@/components/ScoreView'
-import { generateMockScenario } from '@/lib/mockData'
+// generateMockScenario は /api/scenario のフォールバックとして lib/mockData.ts に保持
 import type { AppPhase, CompanyInfo, Scenario, ChatMessage, ScoreResult } from '@/types'
 
 const PHASE_STEPS: { phase: AppPhase; label: string }[] = [
@@ -64,14 +64,32 @@ export default function Home() {
   const [scenario, setScenario] = useState<Scenario | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [scoreResult, setScoreResult] = useState<ScoreResult | null>(null)
+  const [isGeneratingScenario, setIsGeneratingScenario] = useState(false)
+  const [scenarioError, setScenarioError] = useState<string | null>(null)
   const [isAiTyping, setIsAiTyping] = useState(false)
   const [isScoring, setIsScoring] = useState(false)
   const [scoreError, setScoreError] = useState<string | null>(null)
 
-  const handleCreateScenario = (info: CompanyInfo) => {
-    setCompanyInfo(info)
-    setScenario(generateMockScenario(info))
-    setPhase('scenario')
+  const handleCreateScenario = async (info: CompanyInfo) => {
+    setIsGeneratingScenario(true)
+    setScenarioError(null)
+    try {
+      const res = await fetch('/api/scenario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(info),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = (await res.json()) as import('@/types').Scenario
+      setCompanyInfo(info)
+      setScenario(data)
+      setPhase('scenario')
+    } catch (error) {
+      console.error('Scenario generation error:', error)
+      setScenarioError('シナリオの生成中にエラーが発生しました。もう一度お試しください。')
+    } finally {
+      setIsGeneratingScenario(false)
+    }
   }
 
   const handleStartChat = () => {
@@ -146,6 +164,7 @@ export default function Home() {
     setMessages([])
     setScoreResult(null)
     setScoreError(null)
+    setScenarioError(null)
   }
 
   return (
@@ -163,7 +182,13 @@ export default function Home() {
       </header>
 
       <main className="max-w-4xl mx-auto py-8 px-4">
-        {phase === 'input' && <CompanyForm onSubmit={handleCreateScenario} />}
+        {phase === 'input' && (
+          <CompanyForm
+            onSubmit={handleCreateScenario}
+            isGenerating={isGeneratingScenario}
+            error={scenarioError}
+          />
+        )}
 
         {phase === 'scenario' && scenario && companyInfo && (
           <ScenarioView
