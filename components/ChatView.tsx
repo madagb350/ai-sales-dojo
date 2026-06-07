@@ -10,6 +10,7 @@ interface Props {
   onSendMessage: (content: string) => void
   onScore: () => void
   onBack: () => void
+  isAiTyping?: boolean
 }
 
 export default function ChatView({
@@ -19,6 +20,7 @@ export default function ChatView({
   onSendMessage,
   onScore,
   onBack,
+  isAiTyping = false,
 }: Props) {
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -76,7 +78,7 @@ export default function ChatView({
               className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
             >
               <div
-                className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${
+                className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${
                   msg.role === 'user'
                     ? 'bg-blue-700 text-white'
                     : 'bg-slate-200 text-slate-700'
@@ -95,6 +97,16 @@ export default function ChatView({
               </div>
             </div>
           ))}
+          {isAiTyping && (
+            <div className="flex gap-3 flex-row">
+              <div className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold bg-slate-200 text-slate-700">
+                客
+              </div>
+              <div className="max-w-[75%] rounded-2xl px-4 py-3 bg-slate-100 text-slate-500 rounded-tl-sm">
+                <p className="text-sm">入力中...</p>
+              </div>
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
 
@@ -111,8 +123,8 @@ export default function ChatView({
             />
             <button
               onClick={handleSend}
-              disabled={!input.trim()}
-              className="bg-blue-700 hover:bg-blue-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-5 py-3 rounded-xl font-medium transition-colors flex-shrink-0"
+              disabled={!input.trim() || isAiTyping}
+              className="bg-blue-700 hover:bg-blue-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-5 py-3 rounded-xl font-medium transition-colors shrink-0"
             >
               送信
             </button>
